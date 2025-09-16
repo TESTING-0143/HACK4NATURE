@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: eco-react-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: rm -rf node_modules package-lock.json && npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 5000
+      - key: CORS_ORIGIN
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+    healthCheckPath: /health
+
