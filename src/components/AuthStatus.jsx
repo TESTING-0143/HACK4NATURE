@@ -10,7 +10,8 @@ import {
   faChevronDown,
   faHardHat,
   faTools,
-  faUser
+  faUser,
+  faShieldAlt
 } from '@fortawesome/free-solid-svg-icons';
 
 // A component that intelligently displays the auth status in the header.
@@ -18,7 +19,7 @@ import {
 // otherwise it shows the Sign In and Sign Up buttons.
 const AuthStatus = () => {
   // Access the current user object and logout function from the AuthContext
-  const { user, logout } = useAuth();
+  const { user, adminUser, logout, adminLogout } = useAuth();
   const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -27,8 +28,13 @@ const AuthStatus = () => {
   // Function to handle user logout
   const handleLogout = async () => {
     try {
-      await logout();
-      showSuccess('You have been logged out.');
+      if (adminUser) {
+        adminLogout();
+        showSuccess('Admin access revoked.');
+      } else {
+        await logout();
+        showSuccess('You have been logged out.');
+      }
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
@@ -50,9 +56,10 @@ const AuthStatus = () => {
   }, []);
 
   // If a user is logged in (user object exists), show their profile icon and a dropdown
-  if (user) {
+  if (user || adminUser) {
+    const currentUser = adminUser || user;
     // Get the first letter of the email for the avatar if no photo is available
-    const userInitial = user.email ? user.email.charAt(0).toUpperCase() : '?';
+    const userInitial = currentUser.email ? currentUser.email.charAt(0).toUpperCase() : '?';
 
     return (
       <div className="relative" ref={dropdownRef}>
@@ -61,14 +68,14 @@ const AuthStatus = () => {
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-full transition-all duration-300 group"
         >
-          {user.photoURL ? (
+          {currentUser.photoURL ? (
             <img
-              src={user.photoURL}
+              src={currentUser.photoURL}
               alt="User profile"
               className="h-10 w-10 rounded-full object-cover border-2 border-white/50 shadow-lg group-hover:scale-110 transition-transform duration-300"
             />
           ) : (
-            <div className="flex items-center justify-center h-10 w-10 bg-emerald-500 text-white rounded-full font-bold text-xl shadow-lg border-2 border-white/50 group-hover:scale-110 transition-transform duration-300">
+            <div className={`flex items-center justify-center h-10 w-10 ${adminUser ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-emerald-500'} text-white rounded-full font-bold text-xl shadow-lg border-2 border-white/50 group-hover:scale-110 transition-transform duration-300`}>
               {userInitial}
             </div>
           )}
@@ -82,9 +89,14 @@ const AuthStatus = () => {
         {isDropdownOpen && (
           <div className="absolute right-0 mt-3 w-56 glass-card rounded-xl shadow-2xl z-10 p-2 border border-white/30 animate-fade-in-up origin-top-right">
             <div className="p-3 border-b border-white/30 mb-2">
-              <p className="text-gray-800 font-semibold truncate">{user.email}</p>
+              <p className="text-gray-800 font-semibold truncate">{currentUser.email}</p>
               <p className="text-gray-500 text-sm flex items-center gap-2">
-                {user.role === 'worker' ? (
+                {adminUser ? (
+                  <>
+                    <FontAwesomeIcon icon={faShieldAlt} className="text-red-500" />
+                    Admin
+                  </>
+                ) : currentUser.role === 'worker' ? (
                   <>
                     <FontAwesomeIcon icon={faHardHat} className="text-orange-500" />
                     Worker
@@ -98,7 +110,7 @@ const AuthStatus = () => {
               </p>
             </div>
             
-            {user.role === 'worker' && (
+            {!adminUser && user && user.role === 'worker' && (
               <Link
                 to="/worker-dashboard"
                 className="w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-orange-100/60 hover:text-orange-600 transition-colors duration-200 font-semibold flex items-center gap-3"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
+import { useAuth } from '../context/AuthContext'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faFlag,
@@ -18,10 +19,12 @@ import {
   faChartBar,
   faPlus,
   faLock,
-  faClipboardList
+  faClipboardList,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons'
 
 const Home = () => {
+  const { adminUser, adminLogout } = useAuth()
   const [reports, setReports] = useState([])
   const [currentTypeFilter, setCurrentTypeFilter] = useState('all')
   const [showBackToTop, setShowBackToTop] = useState(false)
@@ -29,6 +32,8 @@ const Home = () => {
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedReports, setSelectedReports] = useState([])
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [totalReports, setTotalReports] = useState(0)
   const [reportStats, setReportStats] = useState({
     garbage: 0,
@@ -191,7 +196,12 @@ const Home = () => {
     : reports.filter(report => report.type === currentTypeFilter.replace('_', '-'))
 
   const handleClearReports = () => {
-    setShowPasswordModal(true)
+    if (adminUser) {
+      setShowPasswordModal(true)
+    } else {
+      // Redirect to admin sign in if not authenticated
+      window.location.href = '/admin-signin'
+    }
   }
 
   const handlePasswordSubmit = async () => {
@@ -218,6 +228,70 @@ const Home = () => {
     }
   };
 
+  const handleAdminLogout = () => {
+    adminLogout()
+  }
+
+  const handleSelectReport = (reportId) => {
+    setSelectedReports(prev => 
+      prev.includes(reportId) 
+        ? prev.filter(id => id !== reportId)
+        : [...prev, reportId]
+    )
+  }
+
+  const handleSelectAllReports = () => {
+    if (selectedReports.length === filteredReports.length) {
+      setSelectedReports([])
+    } else {
+      setSelectedReports(filteredReports.map(report => report._id))
+    }
+  }
+
+  const handleDeleteSelected = () => {
+    if (selectedReports.length === 0) {
+      return
+    }
+    setShowDeleteModal(true)
+  }
+
+  const confirmDeleteSelected = async () => {
+    if (password === '12341234') {
+      setShowDeleteModal(false)
+      setPassword('')
+      setPasswordError('')
+      try {
+        // Remove selected reports from the local state
+        setReports(prev => prev.filter(report => !selectedReports.includes(report._id)))
+        setSelectedReports([])
+        
+        // Update stats
+        const remainingReports = reports.filter(report => !selectedReports.includes(report._id))
+        setTotalReports(remainingReports.length)
+        
+        const stats = {
+          garbage: remainingReports.filter(r => r.type === 'garbage').length,
+          animalDeath: remainingReports.filter(r => r.type === 'animal-death').length,
+          animalAdopt: remainingReports.filter(r => r.type === 'animal-adopt').length,
+          other: remainingReports.filter(r => !['garbage', 'animal-death', 'animal-adopt'].includes(r.type)).length
+        }
+        setReportStats(stats)
+        
+        // Here you would typically make an API call to delete the reports
+        // await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reports/delete-selected`, {
+        //   method: 'DELETE',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({ reportIds: selectedReports, password })
+        // })
+        
+      } catch (error) {
+        console.error('Error deleting selected reports:', error)
+      }
+    } else {
+      setPasswordError('Incorrect password')
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-emerald-50 scroll-smooth">
@@ -239,7 +313,7 @@ const Home = () => {
         <div className="relative z-20 text-center text-white px-6">
           <h1 className="text-hero font-black mb-6 font-display drop-shadow-2xl animate-slide-up">
             <span className="bg-gradient-to-r from-white via-emerald-100 to-blue-200 bg-clip-text text-transparent animate-gradient-shift">
-              VIKALP
+              EcoVision
             </span>
           </h1>
           <p className="text-lg md:text-2xl lg:text-3xl font-medium mb-8 drop-shadow-lg max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
@@ -248,22 +322,24 @@ const Home = () => {
             </span>
           </p>
           <div className="flex flex-col sm:flex-row gap-4 xs:gap-6 justify-center items-center animate-slide-up" style={{ animationDelay: '0.6s' }}>
-            <Link
-              to="/report"
-              className="group relative overflow-hidden bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white px-6 xs:px-8 py-3 xs:py-4 rounded-2xl xs:rounded-3xl font-bold text-base xs:text-lg md:text-xl shadow-glow-lg hover:shadow-glow transition-all duration-300 hover:scale-105 transform animate-bounce-gentle"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <span className="relative z-10 flex items-center justify-center">
-                <FontAwesomeIcon icon={faFlag} className="mr-2 xs:mr-3 animate-bounce-gentle" />
-                Report Issue
-              </span>
-            </Link>
+            {!adminUser && (
+              <Link
+                to="/report"
+                className="group relative overflow-hidden bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white px-6 xs:px-8 py-3 xs:py-4 rounded-2xl xs:rounded-3xl font-bold text-base xs:text-lg md:text-xl shadow-glow-lg hover:shadow-glow transition-all duration-300 hover:scale-105 transform animate-bounce-gentle"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span className="relative z-10 flex items-center justify-center">
+                  <FontAwesomeIcon icon={faFlag} className="mr-2 xs:mr-3 animate-bounce-gentle" />
+                  Report Issue
+                </span>
+              </Link>
+            )}
             <button
               onClick={() => scrollToSection('dashboard-section')}
               className="group relative overflow-hidden bg-white/20 backdrop-blur-xl text-white px-6 xs:px-8 py-3 xs:py-4 rounded-2xl xs:rounded-3xl font-bold text-base xs:text-lg md:text-xl shadow-2xl hover:shadow-card-lg transition-all duration-300 border border-white/30 hover:border-white/50 hover:scale-105 hover:bg-white/30 animate-fade-in"
             >
               <FontAwesomeIcon icon={faChartBar} className="mr-2 xs:mr-3" />
-              View Dashboard
+              {adminUser ? 'Admin Dashboard' : 'View Dashboard'}
             </button>
           </div>
         </div>
@@ -339,18 +415,75 @@ const Home = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
             <div>
               <h2 className="text-2xl md:text-3xl font-black text-gray-800 font-heading">
-                Reported Issues Dashboard
+                {adminUser ? 'Admin Dashboard - All Reports' : 'Reported Issues Dashboard'}
               </h2>
-              <p className="text-gray-600 mt-2">Showing {filteredReports.length} of {totalReports} total reports</p>
+              <p className="text-gray-600 mt-2">
+                {adminUser ? `Total Reports: ${totalReports} | Showing: ${filteredReports.length}` : `Showing ${filteredReports.length} of ${totalReports} total reports`}
+              </p>
+              {adminUser && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-sm bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1 rounded-full font-semibold">
+                    Admin Mode
+                  </span>
+                  <button
+                    onClick={handleAdminLogout}
+                    className="text-sm text-red-600 hover:text-red-700 font-semibold transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
-            <button
-              onClick={handleClearReports}
-              className="btn-secondary bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600 group"
-            >
-              <FontAwesomeIcon icon={faTrash} className="mr-2 group-hover:scale-110 transition-transform duration-300" />
-              Clear All Reports
-            </button>
+            {adminUser && (
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={handleSelectAllReports}
+                  className="btn-secondary bg-blue-500 hover:bg-blue-600 text-white border-blue-500 hover:border-blue-600 group"
+                >
+                  <FontAwesomeIcon icon={faCheck} className="mr-2 group-hover:scale-110 transition-transform duration-300" />
+                  {selectedReports.length === filteredReports.length ? 'Deselect All' : 'Select All'}
+                </button>
+                {selectedReports.length > 0 && (
+                  <button
+                    onClick={handleDeleteSelected}
+                    className="btn-secondary bg-orange-500 hover:bg-orange-600 text-white border-orange-500 hover:border-orange-600 group"
+                  >
+                    <FontAwesomeIcon icon={faTrash} className="mr-2 group-hover:scale-110 transition-transform duration-300" />
+                    Delete Selected ({selectedReports.length})
+                  </button>
+                )}
+                <button
+                  onClick={handleClearReports}
+                  className="btn-secondary bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600 group"
+                >
+                  <FontAwesomeIcon icon={faTrash} className="mr-2 group-hover:scale-110 transition-transform duration-300" />
+                  Clear All Reports
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Admin Statistics */}
+          {adminUser && (
+            <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-2xl text-center shadow-lg">
+                <div className="text-2xl font-bold">{reportStats.garbage}</div>
+                <div className="text-sm font-semibold">Garbage Reports</div>
+              </div>
+              <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-4 rounded-2xl text-center shadow-lg">
+                <div className="text-2xl font-bold">{reportStats.animalDeath}</div>
+                <div className="text-sm font-semibold">Animal Death</div>
+              </div>
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-2xl text-center shadow-lg">
+                <div className="text-2xl font-bold">{reportStats.animalAdopt}</div>
+                <div className="text-sm font-semibold">Animal Adoption</div>
+              </div>
+              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-2xl text-center shadow-lg">
+                <div className="text-2xl font-bold">{reportStats.other}</div>
+                <div className="text-sm font-semibold">Other Reports</div>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {isLoading ? (
               <div className="col-span-full text-center py-12">
@@ -387,11 +520,24 @@ const Home = () => {
                 return (
                   <div
                     key={report._id}
-                    className={`relative bg-white/90 backdrop-blur-md rounded-2xl border-2 p-4 shadow-xl hover:shadow-2xl transition-all duration-300 group ${cardType} animate-slide-up card-hover`}
+                    className={`relative bg-white/90 backdrop-blur-md rounded-2xl border-2 p-4 shadow-xl hover:shadow-2xl transition-all duration-300 group ${cardType} animate-slide-up card-hover ${
+                      selectedReports.includes(report._id) ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+                    }`}
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
+                    {/* Admin Selection Checkbox */}
+                    {adminUser && (
+                      <div className="absolute top-4 left-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedReports.includes(report._id)}
+                          onChange={() => handleSelectReport(report._id)}
+                          className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                      </div>
+                    )}
                     {/* Priority Badge */}
-                    <div className={`absolute top-4 right-4 px-3 py-1 rounded-full font-bold text-xs shadow-md animate-bounce-gentle ${priorityClass}`}>
+                    <div className={`absolute top-4 ${adminUser ? 'right-16' : 'right-4'} px-3 py-1 rounded-full font-bold text-xs shadow-md animate-bounce-gentle ${priorityClass}`}>
                       {priority} Priority
                     </div>
                     {/* Type Badge */}
@@ -406,11 +552,45 @@ const Home = () => {
                     <div className="font-semibold text-gray-800 text-center mb-1">
                       {report.location || 'Unknown Location'}
                     </div>
+                    
+                    {/* Admin Details */}
+                    {adminUser && (
+                      <div className="mb-2 text-xs text-gray-600 space-y-1">
+                        {report.description && (
+                          <div className="bg-gray-50 p-2 rounded-lg">
+                            <strong>Description:</strong> {report.description}
+                          </div>
+                        )}
+                        {report.reporterName && (
+                          <div><strong>Reporter:</strong> {report.reporterName}</div>
+                        )}
+                        {report.reporterEmail && (
+                          <div><strong>Email:</strong> {report.reporterEmail}</div>
+                        )}
+                        {report.reporterPhone && (
+                          <div><strong>Phone:</strong> {report.reporterPhone}</div>
+                        )}
+                        {report.assignedWorker && (
+                          <div className="text-orange-600"><strong>Assigned Worker:</strong> {report.assignedWorker}</div>
+                        )}
+                        {report.workerNotes && (
+                          <div className="bg-orange-50 p-2 rounded-lg text-orange-800">
+                            <strong>Worker Notes:</strong> {report.workerNotes}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className={`inline-block px-3 py-1 rounded-full font-semibold text-sm mt-2 ${getStatusColorMap(report.status)}`}>
                       {report.status}
                     </div>
                     <div className="text-gray-500 text-xs mt-1">
                       {new Date(report.createdAt || report.date).toLocaleDateString()}
+                      {adminUser && (
+                        <span className="ml-2">
+                          {new Date(report.createdAt || report.date).toLocaleTimeString()}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
@@ -419,6 +599,144 @@ const Home = () => {
           </div>
         </div>
       </main>
+
+      {/* Worker Details Section - Admin Only */}
+      {adminUser && (
+        <section className="max-w-7xl mx-auto px-6 mt-16 mb-16">
+          <div className="glass-card rounded-3xl p-6 md:p-8 shadow-2xl border border-white/30">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-black text-gray-800 font-heading">
+                  Worker Management
+                </h2>
+                <p className="text-gray-600 mt-2">Monitor worker activities and assignments</p>
+              </div>
+            </div>
+
+            {/* Worker Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-2xl text-center shadow-lg">
+                <div className="text-2xl font-bold">12</div>
+                <div className="text-sm font-semibold">Active Workers</div>
+              </div>
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-2xl text-center shadow-lg">
+                <div className="text-2xl font-bold">8</div>
+                <div className="text-sm font-semibold">Available Workers</div>
+              </div>
+              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-2xl text-center shadow-lg">
+                <div className="text-2xl font-bold">24</div>
+                <div className="text-sm font-semibold">Completed Tasks</div>
+              </div>
+              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-2xl text-center shadow-lg">
+                <div className="text-2xl font-bold">6</div>
+                <div className="text-sm font-semibold">Pending Tasks</div>
+              </div>
+            </div>
+
+            {/* Worker List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[
+                {
+                  id: 1,
+                  name: 'John Smith',
+                  email: 'john.smith@worker.com',
+                  phone: '+1-555-0123',
+                  status: 'active',
+                  completedTasks: 15,
+                  currentTask: 'Garbage Collection - Downtown',
+                  rating: 4.8,
+                  joinDate: '2024-01-01'
+                },
+                {
+                  id: 2,
+                  name: 'Sarah Johnson',
+                  email: 'sarah.johnson@worker.com',
+                  phone: '+1-555-0124',
+                  status: 'available',
+                  completedTasks: 12,
+                  currentTask: null,
+                  rating: 4.9,
+                  joinDate: '2024-01-05'
+                },
+                {
+                  id: 3,
+                  name: 'Mike Wilson',
+                  email: 'mike.wilson@worker.com',
+                  phone: '+1-555-0125',
+                  status: 'active',
+                  completedTasks: 8,
+                  currentTask: 'Street Cleaning - Park Ave',
+                  rating: 4.6,
+                  joinDate: '2024-01-10'
+                },
+                {
+                  id: 4,
+                  name: 'Emily Davis',
+                  email: 'emily.davis@worker.com',
+                  phone: '+1-555-0126',
+                  status: 'available',
+                  completedTasks: 20,
+                  currentTask: null,
+                  rating: 4.9,
+                  joinDate: '2023-12-15'
+                }
+              ].map((worker) => (
+                <div key={worker.id} className="bg-white/90 backdrop-blur-md rounded-2xl border-2 border-orange-200 p-4 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {worker.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-800">{worker.name}</h3>
+                        <p className="text-sm text-gray-600">{worker.email}</p>
+                        <p className="text-sm text-gray-600">{worker.phone}</p>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      worker.status === 'active' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {worker.status}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Completed Tasks:</span>
+                      <span className="font-semibold">{worker.completedTasks}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Rating:</span>
+                      <span className="font-semibold text-yellow-600">★ {worker.rating}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Join Date:</span>
+                      <span className="font-semibold">{new Date(worker.joinDate).toLocaleDateString()}</span>
+                    </div>
+                    {worker.currentTask && (
+                      <div className="mt-3 p-2 bg-orange-50 rounded-lg">
+                        <span className="text-orange-800 font-semibold">Current Task:</span>
+                        <p className="text-orange-700 text-sm mt-1">{worker.currentTask}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-4 flex gap-2">
+                    <button className="flex-1 px-3 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors">
+                      View Details
+                    </button>
+                    <button className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors">
+                      Assign Task
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Password Modal */}
       {showPasswordModal && (
@@ -463,6 +781,57 @@ const Home = () => {
                   className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
                 >
                   Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Selected Reports Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-md w-full animate-scale-in">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon icon={faTrash} className="text-2xl text-orange-500" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Delete Selected Reports</h3>
+              <p className="text-gray-600">Are you sure you want to delete {selectedReports.length} selected report(s)?</p>
+              <p className="text-gray-500 text-sm mt-2">Enter password to confirm deletion</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="form-input focus-ring"
+                  onKeyPress={(e) => e.key === 'Enter' && confirmDeleteSelected()}
+                />
+                {passwordError && (
+                  <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setPassword('')
+                    setPasswordError('')
+                  }}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteSelected}
+                  className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors"
+                >
+                  Delete Selected
                 </button>
               </div>
             </div>
@@ -590,14 +959,16 @@ const Home = () => {
         </div>
       </footer>
 
-      {/* Floating Report Button */}
-      <Link
-        to="/report"
-        className="fixed z-50 bottom-8 right-8 bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-2xl rounded-2xl px-6 md:px-8 py-3 md:py-4 flex items-center gap-3 text-lg md:text-xl font-bold hover:scale-110 hover:shadow-3xl transition-all duration-300 animate-float"
-      >
-        <FontAwesomeIcon icon={faFlag} />
-        <span className="hidden sm:inline">Report Issue</span>
-      </Link>
+      {/* Floating Report Button - Hidden for Admin */}
+      {!adminUser && (
+        <Link
+          to="/report"
+          className="fixed z-50 bottom-8 right-8 bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-2xl rounded-2xl px-6 md:px-8 py-3 md:py-4 flex items-center gap-3 text-lg md:text-xl font-bold hover:scale-110 hover:shadow-3xl transition-all duration-300 animate-float"
+        >
+          <FontAwesomeIcon icon={faFlag} />
+          <span className="hidden sm:inline">Report Issue</span>
+        </Link>
+      )}
 
       {/* Back to Top Button */}
       {showBackToTop && (

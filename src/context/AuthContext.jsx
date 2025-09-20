@@ -50,6 +50,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [adminUser, setAdminUser] = useState(null)
 
   // Sign up with email and password
   const signUp = async (email, password, firstName, lastName, role = 'user', additionalData = {}) => {
@@ -128,6 +129,33 @@ export const AuthProvider = ({ children }) => {
     return userCredential
   }
 
+  // Admin sign in with hardcoded credentials
+  const adminSignIn = async (email, password) => {
+    // Hardcoded admin credentials
+    const ADMIN_EMAIL = 'parascursor9@gmail.com'
+    const ADMIN_PASSWORD = 'Up12k0143@'
+    
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      const adminData = {
+        email: ADMIN_EMAIL,
+        role: 'admin',
+        displayName: 'Admin User',
+        uid: 'admin-user-id'
+      }
+      setAdminUser(adminData)
+      localStorage.setItem('adminUser', JSON.stringify(adminData))
+      return adminData
+    } else {
+      throw new Error('Invalid admin credentials')
+    }
+  }
+
+  // Admin sign out
+  const adminLogout = () => {
+    setAdminUser(null)
+    localStorage.removeItem('adminUser')
+  }
+
   // Sign out
   const logout = () => {
     if (!auth) {
@@ -137,6 +165,17 @@ export const AuthProvider = ({ children }) => {
   }
 
   useEffect(() => {
+    // Check for existing admin session
+    const savedAdminUser = localStorage.getItem('adminUser')
+    if (savedAdminUser) {
+      try {
+        setAdminUser(JSON.parse(savedAdminUser))
+      } catch (error) {
+        console.error('Error parsing admin user data:', error)
+        localStorage.removeItem('adminUser')
+      }
+    }
+
     if (!auth) {
       setLoading(false)
       return
@@ -171,9 +210,12 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    adminUser,
     signUp,
     signIn,
     signInWithGoogle,
+    adminSignIn,
+    adminLogout,
     logout,
     loading
   }

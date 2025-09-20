@@ -95,7 +95,7 @@ const SignIn = () => {
           <div className="flex items-center gap-4">
             <div className="relative">
               <img 
-                src="/logovikalp.png" 
+                src="/image3.webp" 
                 alt="Clean and Healthy Area Logo" 
                 className="h-12 w-12 rounded-2xl object-cover border-4 border-white/30 shadow-xl" 
               />
@@ -103,7 +103,7 @@ const SignIn = () => {
             </div>
             <div className="flex flex-col justify-center">
               <span className="text-xl font-black text-gray-800 tracking-wide font-heading">
-                VIKALP
+                Clean and Healthy Area
               </span>
               <span className="text-gray-600 text-sm font-semibold">Sign In</span>
             </div>

@@ -8,6 +8,7 @@ import SignUp from './pages/SignUp'
 import WorkerSignIn from './pages/WorkerSignIn'
 import WorkerSignUp from './pages/WorkerSignUp'
 import WorkerDashboard from './pages/WorkerDashboard'
+import AdminSignIn from './pages/AdminSignIn'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import Notification from './components/Notification'
@@ -30,6 +31,7 @@ function App() {
                 <Route path="/worker-signin" element={<WorkerSignIn />} />
                 <Route path="/worker-signup" element={<WorkerSignUp />} />
                 <Route path="/worker-dashboard" element={<WorkerDashboard />} />
+                <Route path="/admin-signin" element={<AdminSignIn />} />
               </Routes>
               <Notification />
             </div>

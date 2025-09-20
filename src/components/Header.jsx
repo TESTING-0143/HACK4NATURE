@@ -4,13 +4,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars, faTimes, faLeaf, faHome, faFlag } from '@fortawesome/free-solid-svg-icons'
 import { useAuth } from '../context/AuthContext'
 import AuthStatus from './AuthStatus'
-// Logo served from public folder as /logovikalp.png
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const location = useLocation()
-  const { user, loading } = useAuth() // Use the auth context here
+  const { user, adminUser, loading } = useAuth() // Use the auth context here
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,7 +23,7 @@ const Header = () => {
 
   const navItems = [
     { path: '/', label: 'Home', icon: faHome },
-    { path: '/report', label: 'Report Issue', icon: faFlag }
+    ...(adminUser ? [] : [{ path: '/report', label: 'Report Issue', icon: faFlag }])
   ]
 
   return (
@@ -36,21 +35,24 @@ const Header = () => {
       <div className="container-responsive py-3 xs:py-4">
         <div className="flex items-center justify-between">
           {/* Logo and Brand */}
-          <Link to="/" className="flex items-center gap-3 xs:gap-4 sm:gap-6 group">
-            <div className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14">
-              <img src="/logovikalp.png" alt="Logo" className="w-full h-full object-contain rounded-full shadow-lg transition-transform duration-300 group-hover:scale-110" />
+          <div className="flex items-center gap-3 xs:gap-4 sm:gap-6">
+            <div className="relative group">
+              <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full blur opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+              <div className="relative bg-gradient-to-r from-emerald-500 to-blue-500 p-2 rounded-full shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                <FontAwesomeIcon icon={faLeaf} className="text-white text-lg xs:text-xl sm:text-2xl animate-bounce-gentle" />
+              </div>
             </div>
             <div className="flex flex-col">
               <h1 className="text-lg xs:text-xl sm:text-2xl font-black text-gray-800 font-heading leading-tight">
                 <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-shift">
-                  VIKALP
+                  EcoVision
                 </span>
               </h1>
               <p className="text-xs xs:text-sm text-gray-600 font-medium hidden sm:block">
                 Clean Communities, Green Future
               </p>
             </div>
-          </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6">
@@ -73,7 +75,7 @@ const Header = () => {
               </Link>
             ))}
             {/* Conditionally render AuthStatus or Sign In/Sign Up links */}
-            {!loading && (user ? <AuthStatus /> : (
+            {!loading && (user || adminUser ? <AuthStatus /> : (
               <>
                 <Link
                   to="/signin"
@@ -127,7 +129,7 @@ const Header = () => {
               </Link>
             ))}
             {/* Conditionally render AuthStatus or Sign In/Sign Up links for mobile */}
-            {!loading && (user ? <AuthStatus /> : (
+            {!loading && (user || adminUser ? <AuthStatus /> : (
               <>
                 <Link
                   to="/signin"
