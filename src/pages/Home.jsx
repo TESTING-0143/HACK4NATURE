@@ -313,7 +313,7 @@ const Home = () => {
         <div className="relative z-20 text-center text-white px-6">
           <h1 className="text-hero font-black mb-6 font-display drop-shadow-2xl animate-slide-up">
             <span className="bg-gradient-to-r from-white via-emerald-100 to-blue-200 bg-clip-text text-transparent animate-gradient-shift">
-              EcoVision
+              VIKALP
             </span>
           </h1>
           <p className="text-lg md:text-2xl lg:text-3xl font-medium mb-8 drop-shadow-lg max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
