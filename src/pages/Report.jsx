@@ -458,10 +458,10 @@ const Report = () => {
                   className="w-full px-4 py-3 rounded-2xl border-2 border-blue-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 transition-all duration-300 bg-white/90 backdrop-blur-sm text-gray-800 text-base md:text-lg shadow-sm"
                 >
                   <option value="">Select report type</option>
-                  <option value="garbage">🗑️ Garbage/Waste Collection</option>
-                  <option value="animal-death">💔 Animal Death/Injury/Accident</option>
-                  <option value="animal-care">♻ Sewage Services</option>
-                   <option value="recycling">♻  Pest Control</option>
+                  <option value="garbage"> 🗑️ Garbage/Waste Collection</option>
+                  <option value="animal-death"> 💔 Animal Death/Injury/Accident</option>
+                  <option value="animal-care"> ♻ Sewage Services</option>
+                   <option value="recycling"> ♻  Pest Control</option>
                 
                 </select>
               </div>
@@ -847,6 +847,7 @@ const Report = () => {
 }
 
 export default Report
+
 
 
 
