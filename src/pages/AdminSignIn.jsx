@@ -33,7 +33,7 @@ const AdminSignIn = () => {
   // Redirect if already logged in as admin
   React.useEffect(() => {
     if (adminUser) {
-      navigate('/')
+      navigate('/admin')
     }
   }, [adminUser, navigate])
 
@@ -55,7 +55,7 @@ const AdminSignIn = () => {
     try {
       await adminSignIn(formData.email, formData.password)
       showSuccess('Admin access granted!')
-      navigate('/')
+      navigate('/admin')
     } catch (error) {
       console.error('Admin sign in error:', error)
       showError('Invalid admin credentials. Access denied.')

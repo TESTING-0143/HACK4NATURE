@@ -32,6 +32,7 @@ function App() {
                 <Route path="/worker-signup" element={<WorkerSignUp />} />
                 <Route path="/worker-dashboard" element={<WorkerDashboard />} />
                 <Route path="/admin-signin" element={<AdminSignIn />} />
+                <Route path="/admin" element={<Home />} />
               </Routes>
               <Notification />
             </div>
