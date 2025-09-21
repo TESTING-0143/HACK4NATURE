@@ -45,7 +45,7 @@ const Header = () => {
             <div className="flex flex-col">
               <h1 className="text-lg xs:text-xl sm:text-2xl font-black text-gray-800 font-heading leading-tight">
                 <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-shift">
-                  EcoVision
+                  VIKALP
                 </span>
               </h1>
               <p className="text-xs xs:text-sm text-gray-600 font-medium hidden sm:block">
@@ -157,5 +157,6 @@ const Header = () => {
     </header>
   )
 }
+
 
 export default Header
