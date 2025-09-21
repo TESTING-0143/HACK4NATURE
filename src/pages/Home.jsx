@@ -341,18 +341,6 @@ const Home = () => {
               <FontAwesomeIcon icon={faChartBar} className="mr-2 xs:mr-3" />
               {adminUser ? 'Admin Dashboard' : 'View Dashboard'}
             </button>
-            {!adminUser && (
-              <Link
-                to="/admin-signin"
-                className="group relative overflow-hidden bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white px-6 xs:px-8 py-3 xs:py-4 rounded-2xl xs:rounded-3xl font-bold text-base xs:text-lg md:text-xl shadow-glow-lg hover:shadow-glow transition-all duration-300 hover:scale-105 transform animate-bounce-gentle"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <span className="relative z-10 flex items-center justify-center">
-                  <FontAwesomeIcon icon={faLock} className="mr-2 xs:mr-3 animate-bounce-gentle" />
-                  Admin Access
-                </span>
-              </Link>
-            )}
           </div>
         </div>
       </section>
