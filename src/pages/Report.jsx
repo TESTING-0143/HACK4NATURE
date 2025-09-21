@@ -460,12 +460,9 @@ const Report = () => {
                   <option value="">Select report type</option>
                   <option value="garbage">🗑️ Garbage/Waste Collection</option>
                   <option value="animal-death">💔 Animal Death/Injury</option>
-                  <option value="animal-adopt">🏠 Animal Adoption</option>
                   <option value="animal-care">🐾 Animal Care/Rescue</option>
-                  <option value="cleaning">🧹 Cleaning Request</option>
-                  <option value="recycling">♻️ Recycling Issue</option>
-                  <option value="hazardous">⚠️ Hazardous Waste</option>
-                  <option value="other">📋 Other</option>
+                   <option value="recycling">♻ Pest Control</option>
+                
                 </select>
               </div>
             </div>
@@ -850,3 +847,4 @@ const Report = () => {
 }
 
 export default Report
+
